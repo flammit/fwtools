@@ -14,7 +14,7 @@ Detects and extracts ROM regions for a variety of ROM protocols:
 * Boot Guard Structures
 
 ### Feature TODO:
-* Artifact Tree -> ROM file (unextract)
+* ~~Artifact Tree -> ROM file (unextract)~~
 
 * Artifact Tree -> Protocol-Specific Config
 
@@ -31,7 +31,8 @@ FIT -> microcode, etc.
 ## Install / Run
 
 ```
-go install github.com/flammit/fwtools/cmds/...
+go get github.com/flammit/fwtools/...
+go install github.com/flammit/fwtools/...
 fwcli extract firmware.bin output/
 ```
 
@@ -50,42 +51,36 @@ byte-for-byte reconstructions.
   "Name": "full",
   "Offset": 0,
   "Size": 16777216,
-  "Align": 0,
   "Children": [
     {
       "Type": "raw",
       "Name": "ifd",
       "Offset": 0,
-      "Size": 4096,
-      "Align": 0
+      "Size": 4096
     },
     {
       "Type": "container",
       "Name": "me",
       "Offset": 4096,
       "Size": 2093056,
-      "Align": 0,
       "Children": [
         {
           "Type": "raw",
           "Name": "me/FPT",
           "Offset": 4096,
-          "Size": 3584,
-          "Align": 0
+          "Size": 3584
         },
         {
           "Type": "raw",
           "Name": "me/FTPR",
           "Offset": 8192,
-          "Size": 684032,
-          "Align": 0
+          "Size": 684032
         },
         {
           "Type": "raw",
           "Name": "me/MFS",
           "Offset": 692224,
-          "Size": 409600,
-          "Align": 0
+          "Size": 409600
         }
       ]
     },
@@ -94,49 +89,42 @@ byte-for-byte reconstructions.
       "Name": "fmap",
       "Offset": 2097152,
       "Size": 14680064,
-      "Align": 0,
       "Children": [
         {
           "Type": "container",
           "Name": "fmap/BIOS",
           "Offset": 2097152,
           "Size": 14680064,
-          "Align": 0,
           "Children": [
             {
               "Type": "raw",
               "Name": "fmap/FMAP",
               "Offset": 2097152,
-              "Size": 512,
-              "Align": 0
+              "Size": 512
             },
             {
               "Type": "raw",
               "Name": "fmap/RW_MRC_CACHE",
               "Offset": 2162688,
-              "Size": 65536,
-              "Align": 0
+              "Size": 65536
             },
             {
               "Type": "container",
               "Name": "fmap/COREBOOT",
               "Offset": 2228224,
               "Size": 14548992,
-              "Align": 0,
               "Children": [
                 {
                   "Type": "raw",
                   "Name": "fmap/COREBOOT/cbfs master header/header",
                   "Offset": 2228224,
-                  "Size": 56,
-                  "Align": 0
+                  "Size": 56
                 },
                 {
                   "Type": "raw",
                   "Name": "fmap/COREBOOT/cbfs master header/data",
                   "Offset": 2228280,
-                  "Size": 72,
-                  "Align": 0
+                  "Size": 72
                 },
                 ...
               ]

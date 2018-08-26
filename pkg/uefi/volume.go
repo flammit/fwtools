@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path/filepath"
 
 	"github.com/flammit/fwtools/pkg/rom"
 )
@@ -53,39 +52,18 @@ func DetectEFIVolume(unknownRegion *rom.Region) []*rom.Region {
 
 		// good header
 		log.Printf("UEFI Volume: offset=%08x len=%08x GUID=%v",
-			baseOffset+offset, header.Len,
-			rom.GuidString(header.GUID))
+			baseOffset+offset, header.Len, rom.GuidString(header.GUID))
 
 		// setup new region for the full volume
 		name := fmt.Sprintf("fv_%08x", baseOffset+offset)
 		size := uint32(header.Len)
-		region := &rom.Region{
-			Raw:      unknownRegion.Raw[offset : offset+size],
-			Name:     filepath.Join(unknownRegion.Name, name),
-			Type:     "container", // TODO: use FV handler
-			Offset:   baseOffset + offset,
-			Size:     uint32(size),
-			Children: []*rom.Region{},
-		}
+		region := unknownRegion.Child(baseOffset+offset, size, "container", name)
 
 		// generate headers and scan for files
-		headerRegion := &rom.Region{
-			Raw:    unknownRegion.Raw[offset : offset+uint32(header.HeaderLen)],
-			Name:   filepath.Join(region.Name, "header"),
-			Type:   "raw", // TODO: use FV handler
-			Offset: baseOffset + offset,
-			Size:   uint32(header.HeaderLen),
-			Parent: region,
-		}
+		headerLen := uint32(header.HeaderLen)
+		headerRegion := region.Child(baseOffset+offset, headerLen, "raw", "header")
 		region.Children = append(region.Children, headerRegion)
-		dataRegion := &rom.Region{
-			Raw:    unknownRegion.Raw[offset+uint32(header.HeaderLen) : offset+uint32(size)],
-			Name:   filepath.Join(region.Name, "data"),
-			Type:   "unknown",
-			Offset: baseOffset + offset + uint32(header.HeaderLen),
-			Size:   uint32(size) - uint32(header.HeaderLen),
-			Parent: region,
-		}
+		dataRegion := region.Child(baseOffset+offset+headerLen, size-headerLen, "unknown", "data")
 		dataRegion = rom.DetectRegions(
 			[]rom.Detector{detectEFIFiles},
 			dataRegion,
@@ -93,7 +71,7 @@ func DetectEFIVolume(unknownRegion *rom.Region) []*rom.Region {
 		region.Children = append(region.Children, dataRegion)
 
 		volumes = append(volumes, region)
-		offset += uint32(size)
+		offset += size
 	}
 
 	return volumes

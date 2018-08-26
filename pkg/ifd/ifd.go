@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/flammit/fwtools/pkg/rom"
@@ -202,8 +201,7 @@ func DetectIFD(unknownRegion *rom.Region) []*rom.Region {
 	}
 	log.Printf("\nIFD:\n%v", desc)
 
-	unknownRegion.Type = "container"
-	unknownRegion.Children = []*rom.Region{}
+	regions := []*rom.Region{}
 	nr := int(ifdHeader.NumRegions())
 	for n, name := range RegionNames {
 		if nr > 0 && n > nr {
@@ -223,19 +221,11 @@ func DetectIFD(unknownRegion *rom.Region) []*rom.Region {
 			regionType = "raw"
 		}
 
-		ifdRegion := &rom.Region{
-			Raw:    unknownRegion.Raw[start:end],
-			Parent: unknownRegion,
-			Type:   regionType,
-			Name:   name,
-			Offset: start,
-			Size:   end - start,
-		}
+		ifdRegion := unknownRegion.Child(start, end-start, regionType, name)
+
 		log.Printf("IFD %v/%v: %v %v", n, name, ifdRegion.Type, ifdRegion.Offset)
-		unknownRegion.Children = append(unknownRegion.Children, ifdRegion)
+		regions = append(regions, ifdRegion)
 	}
 
-	sort.Sort(rom.ByOffset(unknownRegion.Children))
-
-	return []*rom.Region{unknownRegion}
+	return regions
 }

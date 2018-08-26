@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -78,14 +77,8 @@ func DetectME(unknownRegion *rom.Region) []*rom.Region {
 	// $FPT
 	// TODO: replace with typed FptHeader+FptEntry+??Footer??
 	// TODO: need to figure out the footer at 0xd80[0x8]
-	regions = append(regions, &rom.Region{
-		Raw:    unknownRegion.Raw[0:0xe00],
-		Type:   "raw",
-		Parent: unknownRegion,
-		Name:   filepath.Join(unknownRegion.Name, "FPT"),
-		Offset: baseOffset,
-		Size:   0xe00,
-	})
+	regions = append(regions, unknownRegion.Child(
+		baseOffset, 0xe00, "raw", "FPT"))
 
 	for _, fptEntry := range fptEntries {
 		offset, len := fptEntry.Offset, fptEntry.Length
@@ -95,14 +88,8 @@ func DetectME(unknownRegion *rom.Region) []*rom.Region {
 		if (offset == 0 && len == 0) || fptName == "FTUP" || offset == 0xffffffff {
 			continue
 		}
-		regions = append(regions, &rom.Region{
-			Raw:    unknownRegion.Raw[offset : offset+len],
-			Type:   "raw",
-			Parent: unknownRegion,
-			Name:   filepath.Join(unknownRegion.Name, fptName),
-			Offset: baseOffset + offset,
-			Size:   len,
-		})
+		regions = append(regions, unknownRegion.Child(
+			baseOffset+offset, len, "raw", fptName))
 	}
 
 	sort.Sort(rom.ByOffset(regions))

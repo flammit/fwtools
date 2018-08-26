@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/flammit/fwtools/pkg/rom"
@@ -61,7 +60,6 @@ func (a FmapArea) NameString() string {
 
 func DetectFlashMap(unknownRegion *rom.Region) []*rom.Region {
 	bs := bytes.NewReader(unknownRegion.Raw)
-	baseOffset := unknownRegion.Offset
 
 	// check for signature
 	// TODO: scan for signature instead of just at the beginning
@@ -94,13 +92,8 @@ func DetectFlashMap(unknownRegion *rom.Region) []*rom.Region {
 			continue
 		}
 
-		region := &rom.Region{
-			Raw:    unknownRegion.Raw[area.Offset-baseOffset : area.Offset+area.Size-baseOffset],
-			Name:   filepath.Join(unknownRegion.Name, area.NameString()),
-			Type:   "unknown",
-			Offset: area.Offset,
-			Size:   area.Size,
-		}
+		region := unknownRegion.Child(area.Offset, area.Size,
+			"unknown", area.NameString())
 
 		if area.NameString() == "FMAP" {
 			// TODO: drop this region and have a custom struct handler

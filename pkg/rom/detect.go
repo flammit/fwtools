@@ -29,7 +29,6 @@ func DetectRegions(detectors []Detector, unknownRegion *Region) *Region {
 		lastOffset := unknownRegion.Offset
 		newRegions := []*Region{}
 		for _, region := range regions {
-			region.Parent = unknownRegion
 			if region.Offset > lastOffset {
 				gapRegion := unknownRegion.UnknownChild(lastOffset, region.Offset-lastOffset)
 				if !gapRegion.Empty() {
@@ -48,8 +47,8 @@ func DetectRegions(detectors []Detector, unknownRegion *Region) *Region {
 			}
 		}
 
-		if len(regions) == 1 {
-			return regions[0]
+		if len(newRegions) == 1 {
+			return newRegions[0]
 		}
 		unknownRegion.Type = "container"
 		unknownRegion.Children = newRegions

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path/filepath"
 
 	"github.com/flammit/fwtools/pkg/rom"
 )
@@ -89,28 +88,26 @@ func DetectVolume(unknownRegion *rom.Region) []*rom.Region {
 			uint64(volume.Align)))
 
 		// TODO: handle with non-raw structures
-		headerRegion := &rom.Region{
-			Raw:    unknownRegion.Raw[off : off+file.Offset],
-			Name:   filepath.Join(unknownRegion.Name, name+"/header"),
-			Type:   "raw",
-			Offset: baseOffset + off,
-			Size:   file.Offset,
-		}
-		files = append(files, headerRegion)
-		dataRegion := &rom.Region{
-			Raw:    unknownRegion.Raw[off+file.Offset : off+size],
-			Name:   filepath.Join(unknownRegion.Name, name+"/data"),
-			Type:   "unknown",
-			Offset: baseOffset + off + file.Offset,
-			Size:   size - file.Offset,
-		}
+		fileRegion := unknownRegion.Child(baseOffset+off, size,
+			"container", name)
+		files = append(files, fileRegion)
+
+		headerRegion := fileRegion.Child(baseOffset+off, file.Offset,
+			"raw", "header")
+		fileRegion.Children = append(fileRegion.Children, headerRegion)
+
+		dataRegion := fileRegion.Child(
+			baseOffset+off+file.Offset,
+			size-file.Offset,
+			"unknown",
+			"data",
+		)
 		if !dataRegion.Empty() {
-			files = append(files, dataRegion)
+			fileRegion.Children = append(fileRegion.Children, dataRegion)
 		}
 
 		// TODO: handle alignment build parameters
 		// when null files are seen
-
 		off += size
 	}
 

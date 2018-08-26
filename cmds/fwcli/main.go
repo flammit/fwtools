@@ -40,22 +40,54 @@ func extract(args []string) {
 		log.Panicf("extract: failed to read rom path '%v': err=%v", romPath, err)
 	}
 
-	biosRegion := rom.DetectRegions(detectors, &rom.Region{
+	region := rom.DetectRegions(detectors, &rom.Region{
 		Raw:    romBytes,
-		Name:   "full",
+		Name:   "",
 		Type:   "unknown",
 		Offset: 0,
 		Size:   uint32(len(romBytes)),
 	})
 
-	err = biosRegion.Write(layoutPath)
+	err = region.Save(layoutPath)
 	if err != nil {
 		log.Panicf("extract: %v", err)
+	}
+
+	// rebuild to check
+	newRomBytes := make([]byte, len(romBytes))
+	for n := 0; n < len(newRomBytes); n++ {
+		newRomBytes[n] = 0xff
+	}
+	region.AddBytes(newRomBytes)
+	for n := 0; n < len(newRomBytes); n++ {
+		if newRomBytes[n] != romBytes[n] {
+			log.Fatalf("rebuilt ROM doesn't match at 0x%08x: expected 0x%02x got 0x%02x",
+				n, romBytes[n], newRomBytes[n])
+		}
 	}
 }
 
 func build(args []string) {
 	log.Printf("build: starting")
+	if len(args) != 2 {
+		log.Fatalf("%v: extract usage: <layout_path> <rom_path>", os.Args[0])
+	}
+	layoutPath, romPath := args[0], args[1]
+
+	region, err := rom.LoadRegion(layoutPath)
+	if err != nil {
+		log.Panicf("build: failed to load region: err=%v", err)
+	}
+	log.Printf("build: rom size is 0x%08x", region.Size)
+	newRomBytes := make([]byte, region.Size)
+	for n := 0; n < len(newRomBytes); n++ {
+		newRomBytes[n] = 0xff
+	}
+	region.AddBytes(newRomBytes)
+	err = ioutil.WriteFile(romPath, newRomBytes, os.ModePerm)
+	if err != nil {
+		log.Panicf("build: failed to write rom file: err=%v", err)
+	}
 }
 
 func main() {
