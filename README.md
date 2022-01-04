@@ -31,8 +31,8 @@ FIT -> microcode, etc.
 ## Install / Run
 
 ```
-go get github.com/flammit/fwtools/...
-go install github.com/flammit/fwtools/...
+go get -u github.com/flammit/fwtools
+export PATH=$PATH:$(go env GOPATH)/bin
 fwcli extract firmware.bin output/
 ```
 
